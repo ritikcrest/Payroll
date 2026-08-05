@@ -435,15 +435,22 @@ function ssValidations(structure, breakup) {
 
 function rSSWizardBar(step) {
   const steps = [
-    { label: 'Basic Details', sub: 'Name, description, date' },
+    { label: 'Basic Details', sub: 'Name and description' },
     { label: 'Salary Components', sub: 'Earnings, deductions' },
     { label: 'Preview & Save', sub: 'Verify and publish' }
   ];
-  return `<div class="ss-wizard-bar">${steps.map((s, i) => {
+  return `<div class="stepper">${steps.map((s, i) => {
     const n = i + 1;
-    const cls = n === step ? 'active' : n < step ? 'done' : '';
-    const dotContent = n < step ? '' : n;
-    return `<div class="ss-wizard-step ${cls}"><div class="ss-wizard-dot">${dotContent}</div><div class="ss-wizard-text"><div class="ss-wizard-label">${s.label}</div><div class="ss-wizard-sub">${s.sub}</div></div></div>`;
+    const isActive = n === step;
+    const isCompleted = n < step;
+    const isDisabled = n > step;
+    const cls = isActive ? 'active' : isCompleted ? 'completed' : isDisabled ? 'disabled' : '';
+    const numContent = isCompleted ? '<i class="ti ti-check"></i>' : String(n);
+    const onclick = !isDisabled ? `onclick="ssWizardGo(${n})"` : '';
+    return `<div class="step ${cls}" ${onclick}>
+      <div class="step-num">${numContent}</div>
+      <div><div class="step-label">${s.label}</div><div class="step-sub">${s.sub}</div></div>
+    </div>`;
   }).join('')}</div>`;
 }
 
@@ -521,13 +528,12 @@ function rSalaryStructuresContent() {
       <div style="overflow-x:auto;">
         <table class="table">
           <thead><tr>
-            <th>Structure Name</th><th>Description</th><th>Employees</th><th>Effective Date</th><th>Status</th><th>Last Updated</th><th>Actions</th>
+            <th>Structure Name</th><th>Description</th><th>Employees</th><th>Status</th><th>Last Updated</th><th>Actions</th>
           </tr></thead>
           <tbody>${list.map(s => `<tr>
             <td><b>${s.name}</b></td>
             <td style="max-width:280px;"><span class="text-sm text-secondary">${s.description.slice(0, 80)}${s.description.length > 80 ? '…' : ''}</span></td>
             <td><b>${s.empCount}</b></td>
-            <td>${new Date(s.effectiveDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
             <td>${ssStatusPill(s.status)}</td>
             <td class="text-xs text-secondary">${s.lastUpdated}</td>
             <td><div class="actions-menu">
@@ -569,7 +575,6 @@ function rSSWizardContent() {
       <div class="card-header"><div class="card-title"><span class="card-title-icon"><i class="ti ti-file-description"></i></span>Basic Details</div></div>
       <div class="field"><label class="field-label">Structure Name *</label><input type="text" value="${data.name}" placeholder="e.g., Premier Standard CTC" oninput="updateSSBasic('name', this.value)" /></div>
       <div class="field"><label class="field-label">Description</label><textarea rows="3" placeholder="Purpose and applicability of this structure" oninput="updateSSBasic('description', this.value)">${data.description || ''}</textarea></div>
-      <div class="field"><label class="field-label">Effective Date *</label><input type="date" value="${data.effectiveDate}" onchange="updateSSBasic('effectiveDate', this.value)" /></div>
     </div>`;
   } else if (step === 2) {
     const struct = { components: data.components, rules: data.rules };
@@ -642,7 +647,7 @@ function rSSDetailContent() {
   const tab = S.ssTab || 'overview';
   const preview = computeSSBreakup(s, 1200000);
 
-  const tabs = [['overview', 'Overview'], ['components', 'Components'], ['employees', 'Assigned Employees'], ['history', 'Version History']];
+  const tabs = [['overview', 'Overview'], ['components', 'Components'], ['employees', 'Assigned Employees']];
 
   let tabContent = '';
   if (tab === 'overview') {
@@ -651,8 +656,6 @@ function rSSDetailContent() {
         <div class="info-grid">
           <div><div class="field-label">Name</div><div class="field-value">${s.name}</div></div>
           <div><div class="field-label">Code</div><div class="field-value"><span class="item-code-tag">${s.code}</span></div></div>
-          <div><div class="field-label">Company</div><div class="field-value">${E[s.entity]?.name}</div></div>
-          <div><div class="field-label">Effective Date</div><div class="field-value">${new Date(s.effectiveDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</div></div>
           <div><div class="field-label">Employees Assigned</div><div class="field-value font-bold">${s.empCount}</div></div>
           <div><div class="field-label">Created By</div><div class="field-value">${s.createdBy}</div></div>
           <div><div class="field-label">Last Updated</div><div class="field-value">${s.lastUpdated}</div></div>
@@ -676,8 +679,8 @@ function rSSDetailContent() {
       const keys = Object.keys(SS_COMPONENT_META).filter(k => SS_COMPONENT_META[k].group === g);
       const sectionTitle = g === 'earnings' ? 'Earnings' : g === 'employer' ? 'Employer Contributions' : 'Employee Deductions';
       return `<div class="card" style="padding:0;margin-bottom:14px;"><div style="padding:12px 16px;background:var(--surface-subtle);font-weight:600;font-size:13px;">${sectionTitle}</div>
-        <table class="inputs-table"><thead><tr><th>Component</th><th>Calculation</th><th>Value</th><th class="center">In CTC</th><th class="center">Taxable</th><th class="center">Status</th></tr></thead>
-        <tbody>${keys.map(k => { const meta = SS_COMPONENT_META[k]; const comp = s.components[k]; return `<tr class="${!comp.enabled ? 'opacity-55' : ''}"><td><b>${meta.label}</b></td><td>${ssCalcDisplayLabel(comp)}</td><td>${ssValueLabel(comp)}</td><td class="center-cell">${comp.inCTC ? 'Yes' : 'No'}</td><td class="center-cell">${comp.taxable ? 'Yes' : 'No'}</td><td class="center-cell">${comp.enabled ? '<span class="pill pill-green" style="padding:1px 6px;font-size:9px;">On</span>' : '<span class="pill pill-gray" style="padding:1px 6px;font-size:9px;">Off</span>'}</td></tr>`; }).join('')}</tbody></table></div>`;
+        <table class="inputs-table"><thead><tr><th>Component</th><th>Calculation</th><th>Value</th><th class="center">In CTC</th><th class="center">Status</th></tr></thead>
+        <tbody>${keys.map(k => { const meta = SS_COMPONENT_META[k]; const comp = s.components[k]; return `<tr class="${!comp.enabled ? 'opacity-55' : ''}"><td><b>${meta.label}</b></td><td>${ssCalcDisplayLabel(comp)}</td><td>${ssValueLabel(comp)}</td><td class="center-cell">${comp.inCTC ? 'Yes' : 'No'}</td><td class="center-cell">${comp.enabled ? '<span class="pill pill-green" style="padding:1px 6px;font-size:9px;">On</span>' : '<span class="pill pill-gray" style="padding:1px 6px;font-size:9px;">Off</span>'}</td></tr>`; }).join('')}</tbody></table></div>`;
     }).join('');
   } else if (tab === 'employees') {
     tabContent = `<div class="card" style="padding:0;">
@@ -688,8 +691,6 @@ function rSSDetailContent() {
       <table class="table"><thead><tr><th>Employee</th><th>Department</th><th>Designation</th><th>Annual CTC</th><th>Effective Date</th></tr></thead>
       <tbody>${s.assignments.length ? s.assignments.map(a => { const e = EMP.find(x => x.id === a.empId); return `<tr><td><b>${e?.name || a.empId}</b><br><span class="text-xs text-secondary">${a.empId}</span></td><td>${a.dept}</td><td>${a.designation}</td><td><b>${fmtL(a.annualCTC)}</b></td><td>${new Date(a.effectiveDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</td></tr>`; }).join('') : '<tr><td colspan="5" class="text-secondary text-center" style="padding:32px;">No employees assigned yet</td></tr>'}</tbody></table>
     </div>`;
-  } else {
-    tabContent = `<div class="card"><div class="timeline">${s.versions.map(v => `<div class="timeline-event ${v.status === 'active' ? 'green' : 'blue'}"><div class="timeline-dot"></div><div class="timeline-title">${v.version} · ${v.reason}</div><div class="timeline-meta">${ssStatusPill(v.status === 'active' ? 'active' : 'inactive')}</div><div class="timeline-date">${v.date}</div></div>`).join('')}</div></div>`;
   }
 
   return `<div class="tabs">${tabs.map(t => `<div class="tab ${tab === t[0] ? 'active' : ''}" onclick="setT('ssTab','${t[0]}'); R();">${t[1]}</div>`).join('')}</div>
@@ -705,7 +706,7 @@ function rSSDetail() {
         <button class="icon-btn" onclick="navSS()"><i class="ti ti-arrow-left"></i></button>
         <div>
           <h1 class="page-title">${s.name}</h1>
-          <p class="page-sub">${s.code} · ${E[s.entity]?.name} · ${ssStatusPill(s.status)}</p>
+          <p class="page-sub">${s.code} · ${ssStatusPill(s.status)}</p>
         </div>
       </div>
       <div class="page-actions">

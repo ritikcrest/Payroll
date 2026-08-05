@@ -296,20 +296,6 @@
   .ss-calc-select, .ss-value-input { font-size: 11px; padding: 5px 6px; width: 100%; min-width: 0; }
   .ss-calc-select { font-size: 10px; padding: 5px 4px; }
   .ss-value-input { text-align: right; }
-  .ss-wizard-bar { display: flex; align-items: stretch; gap: 6px; margin-bottom: 24px; padding: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
-  .ss-wizard-step { flex: 1; display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 10px; min-width: 0; }
-  .ss-wizard-step.active { background: var(--blue-bg); }
-  .ss-wizard-dot { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; line-height: 1; }
-  .ss-wizard-step.done .ss-wizard-dot { background: var(--green); color: transparent; }
-  .ss-wizard-step.active .ss-wizard-dot { background: var(--blue); color: white; }
-  .ss-wizard-step:not(.done):not(.active) .ss-wizard-dot { background: #E5E7EB; color: var(--text-tertiary); }
-  .ss-wizard-text { min-width: 0; }
-  .ss-wizard-label { font-size: 14px; font-weight: 700; line-height: 1.25; color: var(--text-tertiary); }
-  .ss-wizard-sub { font-size: 12px; line-height: 1.3; margin-top: 2px; color: #D1D5DB; }
-  .ss-wizard-step.done .ss-wizard-label { color: var(--green-text); }
-  .ss-wizard-step.done .ss-wizard-sub { color: var(--text-secondary); }
-  .ss-wizard-step.active .ss-wizard-label { color: var(--blue-text); }
-  .ss-wizard-step.active .ss-wizard-sub { color: #64748B; }
   .ss-validation { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; font-size: 12px; margin-bottom: 8px; }
   .ss-validation.pass { background: var(--green-bg); color: var(--green-text); }
   .ss-validation.warn { background: var(--orange-bg); color: var(--orange-text); }
